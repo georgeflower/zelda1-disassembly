@@ -210,7 +210,7 @@ update_select:
     beq update_action
     addq.b #1, OFF_CURRENT_ROOM(%a5)
     cmpi.b #DEMO_ROOM_COUNT, OFF_CURRENT_ROOM(%a5)
-    blo room_ok
+    bne room_ok
     clr.b OFF_CURRENT_ROOM(%a5)
 room_ok:
     bsr apply_room_palette

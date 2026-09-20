@@ -26,7 +26,7 @@ all: $(PRG)
 
 assets: $(ASSET_INC) $(ASSET_BIN)
 
-$(ASSET_INC) $(ASSET_BIN) $(MANIFEST): $(TOOLS_DIR)/build_assets.py $(ROOT_DIR)/src/bins.xml
+$(ASSET_INC) $(ASSET_BIN) $(MANIFEST): $(TOOLS_DIR)/build_assets.py
 	@mkdir -p $(GENERATED_DIR)
 	$(PYTHON) $(TOOLS_DIR)/build_assets.py --source-root $(ROOT_DIR) --out-dir $(GENERATED_DIR)
 
