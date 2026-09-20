@@ -229,8 +229,10 @@ update_select:
     tst.b OFF_SELECT_EVENT(%a5)
     beq update_action
     addq.b #1, OFF_CURRENT_ROOM(%a5)
-    cmpi.b #DEMO_ROOM_COUNT, OFF_CURRENT_ROOM(%a5)
-    bne room_ok
+    moveq #0, %d0
+    move.b OFF_CURRENT_ROOM(%a5), %d0
+    cmpi.w #DEMO_ROOM_COUNT, %d0
+    blt room_ok
     clr.b OFF_CURRENT_ROOM(%a5)
 room_ok:
     bsr apply_room_palette
