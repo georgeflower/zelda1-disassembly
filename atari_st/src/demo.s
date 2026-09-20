@@ -392,7 +392,8 @@ copy_metatile_row:
     dbra %d5, copy_metatile_row
     adda.w #METATILE_STRIDE, %a2
     dbra %d6, col_loop
-    adda.l #(SCREEN_STRIDE * METATILE_HEIGHT), %a1
+    movea.l %a2, %a1
+    adda.l #(SCREEN_STRIDE * (METATILE_HEIGHT - 1)), %a1
     dbra %d7, row_loop
     rts
 

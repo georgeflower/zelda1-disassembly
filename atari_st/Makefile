@@ -3,6 +3,7 @@ BUILD_DIR := build
 GENERATED_DIR := $(BUILD_DIR)/generated
 SRC_DIR := src
 TOOLS_DIR := tools
+ASSET_INPUTS := $(ROOT_DIR)/src/bins.xml $(wildcard $(ROOT_DIR)/bin/dat/CommonBackgroundPatterns.dat $(ROOT_DIR)/ext/Original.nes)
 TOOLCHAIN_PREFIX ?= m68k-linux-gnu-
 AS := $(TOOLCHAIN_PREFIX)as
 LD := $(TOOLCHAIN_PREFIX)ld
@@ -21,13 +22,13 @@ ASSET_INC := $(GENERATED_DIR)/demo_assets.inc
 ASSET_BIN := $(GENERATED_DIR)/demo_metatiles.bin
 MANIFEST := $(GENERATED_DIR)/asset_manifest.txt
 
-.PHONY: all assets check clean FORCE
+.PHONY: all assets check clean
 
 all: $(PRG)
 
 assets: $(ASSET_STAMP)
 
-$(ASSET_STAMP): FORCE $(TOOLS_DIR)/build_assets.py
+$(ASSET_STAMP): $(TOOLS_DIR)/build_assets.py $(ASSET_INPUTS)
 	@mkdir -p $(GENERATED_DIR)
 	$(PYTHON) $(TOOLS_DIR)/build_assets.py --source-root $(ROOT_DIR) --out-dir $(GENERATED_DIR)
 	@touch $@
@@ -53,5 +54,3 @@ check: all
 
 clean:
 	rm -rf $(BUILD_DIR)
-
-FORCE:
