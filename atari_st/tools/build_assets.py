@@ -86,13 +86,13 @@ def find_pattern_source(source_root: Path) -> bytes | None:
     if not rom_path.exists() or not bins_path.exists():
         return None
 
+    rom = rom_path.read_bytes()
     xml_root = ET.fromstring(bins_path.read_text())
     for binary in xml_root.findall("Binary"):
         if binary.attrib.get("FileName") != PATTERN_SOURCE_NAME:
             continue
         offset = int(binary.attrib["Offset"]) + 16
         length = int(binary.attrib["Length"])
-        rom = rom_path.read_bytes()
         return rom[offset : offset + length]
 
     return None

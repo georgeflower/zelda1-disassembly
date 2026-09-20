@@ -120,6 +120,7 @@ clear_screen:
     move.b %d0, VIDEO_BASE_MID
     lsr.l #8, %d0
     move.b %d0, VIDEO_BASE_HI
+    clr.b VIDEO_BASE_LOW
 
     clr.b SHIFT_MODE
     bsr apply_room_palette
