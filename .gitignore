@@ -2,7 +2,10 @@
 *.bin
 *.nes
 *.o
+*.elf
+*.PRG
 bak/
+atari_st/build/
 bin/
 ext/
 obj/
