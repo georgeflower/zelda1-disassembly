@@ -17,7 +17,6 @@ ELF := $(BUILD_DIR)/zelda_st.elf
 BIN := $(BUILD_DIR)/zelda_st.bin
 PRG := $(BUILD_DIR)/ZELDAST.PRG
 OBJ := $(BUILD_DIR)/demo.o
-ASSET_STAMP := $(GENERATED_DIR)/.assets.stamp
 ASSET_INC := $(GENERATED_DIR)/demo_assets.inc
 ASSET_BIN := $(GENERATED_DIR)/demo_metatiles.bin
 MANIFEST := $(GENERATED_DIR)/asset_manifest.txt
@@ -26,14 +25,11 @@ MANIFEST := $(GENERATED_DIR)/asset_manifest.txt
 
 all: $(PRG)
 
-assets: $(ASSET_STAMP)
+assets: $(ASSET_INC) $(ASSET_BIN) $(MANIFEST)
 
-$(ASSET_STAMP): $(TOOLS_DIR)/build_assets.py $(ASSET_INPUTS)
+$(ASSET_INC) $(ASSET_BIN) $(MANIFEST) &: $(TOOLS_DIR)/build_assets.py $(ASSET_INPUTS)
 	@mkdir -p $(GENERATED_DIR)
 	$(PYTHON) $(TOOLS_DIR)/build_assets.py --source-root $(ROOT_DIR) --out-dir $(GENERATED_DIR)
-	@touch $@
-
-$(ASSET_INC) $(ASSET_BIN) $(MANIFEST): $(ASSET_STAMP)
 
 $(OBJ): $(SRC_DIR)/demo.s $(ASSET_INC) $(ASSET_BIN)
 	@mkdir -p $(BUILD_DIR)
