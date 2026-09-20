@@ -87,7 +87,7 @@ def find_pattern_source(source_root: Path) -> bytes | None:
         return None
 
     rom = rom_path.read_bytes()
-    xml_root = ET.fromstring(bins_path.read_text())
+    xml_root = ET.fromstring(bins_path.read_text(encoding="utf-8"))
     for binary in xml_root.findall("Binary"):
         if binary.attrib.get("FileName") != PATTERN_SOURCE_NAME:
             continue
@@ -227,7 +227,7 @@ def write_outputs(out_dir: Path, bundle: AssetBundle) -> None:
         format_bytes("room_maps", (value for room in ROOMS for row in room for value in row)),
         "",
     ]
-    (out_dir / "demo_assets.inc").write_text("\n".join(include_parts))
+    (out_dir / "demo_assets.inc").write_text("\n".join(include_parts), encoding="utf-8")
 
     manifest = textwrap.dedent(
         f"""\
@@ -240,7 +240,7 @@ def write_outputs(out_dir: Path, bundle: AssetBundle) -> None:
         output_format=Atari ST low-resolution planar 16x16 metatiles
         """
     )
-    (out_dir / "asset_manifest.txt").write_text(manifest)
+    (out_dir / "asset_manifest.txt").write_text(manifest, encoding="utf-8")
 
 
 def verify_outputs(out_dir: Path) -> None:

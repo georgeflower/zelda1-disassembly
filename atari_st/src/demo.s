@@ -96,10 +96,14 @@ save_palette:
     move.w (%a1)+, (%a0)+
     dbra %d7, save_palette
 
-    move.b VIDEO_BASE_HI, OFF_OLD_SCREEN_HI(%a5)
-    move.b VIDEO_BASE_MID, OFF_OLD_SCREEN_MID(%a5)
-    move.b VIDEO_BASE_LOW, OFF_OLD_SCREEN_LOW(%a5)
-    move.b SHIFT_MODE, OFF_OLD_SHIFT_MODE(%a5)
+    movea.l #VIDEO_BASE_HI, %a0
+    move.b (%a0), OFF_OLD_SCREEN_HI(%a5)
+    movea.l #VIDEO_BASE_MID, %a0
+    move.b (%a0), OFF_OLD_SCREEN_MID(%a5)
+    movea.l #VIDEO_BASE_LOW, %a0
+    move.b (%a0), OFF_OLD_SCREEN_LOW(%a5)
+    movea.l #SHIFT_MODE, %a0
+    move.b (%a0), OFF_OLD_SHIFT_MODE(%a5)
 
     lea screen_buffer_raw(%pc), %a0
     move.l %a0, %d0
@@ -117,12 +121,16 @@ clear_screen:
     movea.l OFF_SCREEN_BASE_PTR(%a5), %a0
     move.l %a0, %d0
     lsr.l #8, %d0
-    move.b %d0, VIDEO_BASE_MID
+    movea.l #VIDEO_BASE_MID, %a1
+    move.b %d0, (%a1)
     lsr.l #8, %d0
-    move.b %d0, VIDEO_BASE_HI
-    clr.b VIDEO_BASE_LOW
+    movea.l #VIDEO_BASE_HI, %a1
+    move.b %d0, (%a1)
+    movea.l #VIDEO_BASE_LOW, %a1
+    clr.b (%a1)
 
-    clr.b SHIFT_MODE
+    movea.l #SHIFT_MODE, %a1
+    clr.b (%a1)
     bsr apply_room_palette
     bsr draw_frame
     rts
@@ -135,16 +143,21 @@ restore_palette_loop:
     move.w (%a0)+, (%a1)+
     dbra %d7, restore_palette_loop
 
-    move.b OFF_OLD_SCREEN_MID(%a5), VIDEO_BASE_MID
-    move.b OFF_OLD_SCREEN_HI(%a5), VIDEO_BASE_HI
-    move.b OFF_OLD_SCREEN_LOW(%a5), VIDEO_BASE_LOW
-    move.b OFF_OLD_SHIFT_MODE(%a5), SHIFT_MODE
+    movea.l #VIDEO_BASE_MID, %a1
+    move.b OFF_OLD_SCREEN_MID(%a5), (%a1)
+    movea.l #VIDEO_BASE_HI, %a1
+    move.b OFF_OLD_SCREEN_HI(%a5), (%a1)
+    movea.l #VIDEO_BASE_LOW, %a1
+    move.b OFF_OLD_SCREEN_LOW(%a5), (%a1)
+    movea.l #SHIFT_MODE, %a1
+    move.b OFF_OLD_SHIFT_MODE(%a5), (%a1)
     rts
 
 wait_vbl:
-    move.w FR_CLOCK, %d0
+    movea.l #FR_CLOCK, %a0
+    move.l (%a0), %d0
 wait_vbl_loop:
-    cmp.w FR_CLOCK, %d0
+    cmp.l (%a0), %d0
     beq wait_vbl_loop
     rts
 
@@ -154,12 +167,14 @@ poll_keyboard:
     clr.b OFF_SELECT_EVENT(%a5)
 
 poll_keyboard_loop:
-    move.b IKBD_ACIA_STATUS, %d0
+    movea.l #IKBD_ACIA_STATUS, %a0
+    move.b (%a0), %d0
     btst #0, %d0
     beq poll_keyboard_done
 
     moveq #0, %d0
-    move.b IKBD_ACIA_DATA, %d0
+    movea.l #IKBD_ACIA_DATA, %a0
+    move.b (%a0), %d0
     cmpi.b #0x80, %d0
     bcc handle_key_release
 
