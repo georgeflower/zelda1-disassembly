@@ -147,7 +147,7 @@ def build_placeholder_chr() -> list[list[list[int]]]:
 
 def load_assets(source_root: Path) -> AssetBundle:
     pattern_data = find_pattern_source(source_root)
-    if pattern_data:
+    if pattern_data is not None:
         return AssetBundle(decode_nes_chr(pattern_data), "ROM-derived CHR from CommonBackgroundPatterns.dat")
     return AssetBundle(build_placeholder_chr(), "generated placeholder CHR (Original.nes not available)")
 

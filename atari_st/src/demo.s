@@ -16,13 +16,15 @@
     .equ OFF_EXIT_REQUESTED, 9
     .equ OFF_OLD_SCREEN_HI, 10
     .equ OFF_OLD_SCREEN_MID, 11
-    .equ OFF_OLD_SHIFT_MODE, 12
+    .equ OFF_OLD_SCREEN_LOW, 12
+    .equ OFF_OLD_SHIFT_MODE, 13
     .equ OFF_SCREEN_BASE_PTR, 16
     .equ OFF_OLD_PALETTE, 20
     .equ OFF_KEY_STATES, 52
 
     .equ VIDEO_BASE_HI, 0x00ff8201
     .equ VIDEO_BASE_MID, 0x00ff8203
+    .equ VIDEO_BASE_LOW, 0x00ff820d
     .equ PALETTE_BASE, 0x00ff8240
     .equ SHIFT_MODE, 0x00ff8260
     .equ FR_CLOCK, 0x00000462
@@ -96,6 +98,7 @@ save_palette:
 
     move.b VIDEO_BASE_HI, OFF_OLD_SCREEN_HI(%a5)
     move.b VIDEO_BASE_MID, OFF_OLD_SCREEN_MID(%a5)
+    move.b VIDEO_BASE_LOW, OFF_OLD_SCREEN_LOW(%a5)
     move.b SHIFT_MODE, OFF_OLD_SHIFT_MODE(%a5)
 
     lea screen_buffer_raw(%pc), %a0
@@ -133,6 +136,7 @@ restore_palette_loop:
 
     move.b OFF_OLD_SCREEN_MID(%a5), VIDEO_BASE_MID
     move.b OFF_OLD_SCREEN_HI(%a5), VIDEO_BASE_HI
+    move.b OFF_OLD_SCREEN_LOW(%a5), VIDEO_BASE_LOW
     move.b OFF_OLD_SHIFT_MODE(%a5), SHIFT_MODE
     rts
 

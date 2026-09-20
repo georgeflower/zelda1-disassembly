@@ -3,6 +3,7 @@ BUILD_DIR := build
 GENERATED_DIR := $(BUILD_DIR)/generated
 SRC_DIR := src
 TOOLS_DIR := tools
+ASSET_INPUTS := $(wildcard $(ROOT_DIR)/src/bins.xml $(ROOT_DIR)/bin/dat/CommonBackgroundPatterns.dat $(ROOT_DIR)/ext/Original.nes)
 TOOLCHAIN_PREFIX ?= m68k-linux-gnu-
 AS := $(TOOLCHAIN_PREFIX)as
 LD := $(TOOLCHAIN_PREFIX)ld
@@ -26,7 +27,7 @@ all: $(PRG)
 
 assets: $(ASSET_INC) $(ASSET_BIN)
 
-$(ASSET_INC) $(ASSET_BIN) $(MANIFEST): $(TOOLS_DIR)/build_assets.py
+$(ASSET_INC) $(ASSET_BIN) $(MANIFEST): $(TOOLS_DIR)/build_assets.py $(ASSET_INPUTS)
 	@mkdir -p $(GENERATED_DIR)
 	$(PYTHON) $(TOOLS_DIR)/build_assets.py --source-root $(ROOT_DIR) --out-dir $(GENERATED_DIR)
 
