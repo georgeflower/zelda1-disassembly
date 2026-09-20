@@ -121,7 +121,7 @@ clear_screen:
     movea.l OFF_SCREEN_BASE_PTR(%a5), %a0
     move.l %a0, %d0
     movea.l #VIDEO_BASE_LOW, %a1
-    clr.b (%a1)
+    move.b %d0, (%a1)
     lsr.l #8, %d0
     movea.l #VIDEO_BASE_MID, %a1
     move.b %d0, (%a1)

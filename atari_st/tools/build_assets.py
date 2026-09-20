@@ -95,8 +95,8 @@ def find_pattern_source(source_root: Path) -> bytes | None:
     for binary in xml_root.iterfind(".//Binary"):
         if binary.attrib.get("FileName") != PATTERN_SOURCE_NAME:
             continue
-        offset = int(binary.attrib["Offset"]) + data_offset
-        length = int(binary.attrib["Length"])
+        offset = int(binary.attrib["Offset"], 0) + data_offset
+        length = int(binary.attrib["Length"], 0)
         if offset + length > len(rom):
             raise ValueError(
                 f"{rom_path} is too short for {PATTERN_SOURCE_NAME}: need {offset + length} bytes, found {len(rom)}"
