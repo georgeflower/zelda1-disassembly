@@ -87,12 +87,19 @@ def find_pattern_source(source_root: Path) -> bytes | None:
         return None
 
     rom = rom_path.read_bytes()
+    if len(rom) < 16 or rom[:4] != b"NES\x1a":
+        raise ValueError(f"{rom_path} is not a valid iNES ROM image")
+
     xml_root = ET.fromstring(bins_path.read_text(encoding="utf-8"))
     for binary in xml_root.findall("Binary"):
         if binary.attrib.get("FileName") != PATTERN_SOURCE_NAME:
             continue
         offset = int(binary.attrib["Offset"]) + 16
         length = int(binary.attrib["Length"])
+        if offset + length > len(rom):
+            raise ValueError(
+                f"{rom_path} is too short for {PATTERN_SOURCE_NAME}: need {offset + length} bytes, found {len(rom)}"
+            )
         return rom[offset : offset + length]
 
     return None
@@ -259,8 +266,32 @@ def verify_outputs(out_dir: Path) -> None:
         )
 
     include_text = include_path.read_text()
-    if "DEMO_MAP_WIDTH" not in include_text or "room_maps:" not in include_text:
+    if (
+        "DEMO_MAP_WIDTH" not in include_text
+        or "DEMO_METATILE_COUNT" not in include_text
+        or "room_palettes:" not in include_text
+        or "room_maps:" not in include_text
+    ):
         raise SystemExit("demo_assets.inc is missing required symbols")
+
+    manifest_values = {}
+    for line in manifest_path.read_text(encoding="utf-8").splitlines():
+        if not line:
+            continue
+        key, _, value = line.partition("=")
+        manifest_values[key] = value
+
+    expected_manifest = {
+        "pattern_source_name": PATTERN_SOURCE_NAME,
+        "room_count": str(len(ROOMS)),
+        "room_size": f"{MAP_WIDTH}x{MAP_HEIGHT}",
+        "metatile_count": str(len(METATILES)),
+        "metatile_bytes": str(METATILE_BYTES),
+        "output_format": "Atari ST low-resolution planar 16x16 metatiles",
+    }
+    for key, expected in expected_manifest.items():
+        if manifest_values.get(key) != expected:
+            raise SystemExit(f"asset_manifest.txt has wrong {key}: expected {expected!r}, got {manifest_values.get(key)!r}")
 
     print(f"Verified generated assets in {out_dir}")
 

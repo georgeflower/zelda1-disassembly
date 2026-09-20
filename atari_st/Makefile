@@ -45,6 +45,7 @@ $(PRG): $(BIN) $(TOOLS_DIR)/make_prg.py
 	$(PYTHON) $(TOOLS_DIR)/make_prg.py $< $@
 
 check: all
+	$(PYTHON) -m unittest discover -s tests -p 'test_*.py'
 	$(PYTHON) $(TOOLS_DIR)/build_assets.py --source-root $(ROOT_DIR) --out-dir $(GENERATED_DIR) --verify-only
 	$(PYTHON) $(TOOLS_DIR)/make_prg.py --check $(PRG)
 
