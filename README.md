@@ -48,7 +48,7 @@ Atari STFM / Hatari vertical slice
 ----------------------------------
 
 This repository now also contains an experimental native Atari ST target in
-`/home/runner/work/zelda1-disassembly/zelda1-disassembly/atari_st`. It is a
+`atari_st`. It is a
 small, buildable 68000 vertical slice meant to preserve the original NES
 disassembly while establishing a migration path for a future native port.
 
