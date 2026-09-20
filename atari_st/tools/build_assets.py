@@ -89,7 +89,9 @@ def find_pattern_source(source_root: Path) -> bytes | None:
     rom = rom_path.read_bytes()
     if len(rom) < 16 or rom[:4] != b"NES\x1a":
         raise ValueError(f"{rom_path} is not a valid iNES ROM image")
-    data_offset = 16 + (512 if (rom[6] & 0x04) else 0)
+    trainer_bytes = 512 if (rom[6] & 0x04) else 0
+    prg_rom_bytes = rom[4] * 16 * 1024
+    data_offset = 16 + trainer_bytes + prg_rom_bytes
 
     xml_root = ET.fromstring(bins_path.read_text(encoding="utf-8"))
     for binary in xml_root.iterfind(".//Binary"):

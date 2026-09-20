@@ -36,8 +36,11 @@ def check_prg(path: Path) -> None:
     if magic != HEADER_MAGIC:
         raise SystemExit(f"{path} has wrong magic: 0x{magic:04x}")
     if abs_flag != 1:
-        raise SystemExit(f"{path} has absflag={abs_flag}, expected 1 for a relocation-free PRG")
+        raise SystemExit(
+            f"{path} has absflag={abs_flag}; this checker only validates the absolute, relocation-free PRGs emitted by this build"
+        )
 
+    # This build emits absolute PRGs without a relocation table, so header + text + data + symbols is the full file.
     expected_size = HEADER_SIZE + text_len + data_len + sym_len
     if expected_size != len(data):
         raise SystemExit(

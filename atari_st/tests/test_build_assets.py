@@ -36,11 +36,14 @@ class BuildAssetsTests(unittest.TestCase):
 
             chr_data = bytes([0x00, 0xFF] * (16 * 44 // 2))
             trainer = bytes([0xAA]) * 512
+            prg_rom = bytes([0x55]) * (16 * 1024)
             (root / "src" / "bins.xml").write_text(
                 "<Binaries><Binary Offset='0x0' Length='0x2c0' FileName='dat/CommonBackgroundPatterns.dat'/></Binaries>",
                 encoding="utf-8",
             )
-            (root / "ext" / "Original.nes").write_bytes(b"NES\x1a" + bytes([0, 0, 0x04]) + bytes(9) + trainer + chr_data)
+            (root / "ext" / "Original.nes").write_bytes(
+                b"NES\x1a" + bytes([1, 0, 0x04]) + bytes(9) + trainer + prg_rom + chr_data
+            )
 
             bundle = build_assets.load_assets(root)
             self.assertIn("ROM-derived", bundle.source_note)
