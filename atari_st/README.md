@@ -1,37 +1,40 @@
-Atari STFM / Hatari vertical slice
-==================================
+Atari STFM / Hatari port
+========================
 
-This directory contains a first native Atari ST vertical slice for the Zelda 1
-disassembly project. It is intentionally scoped as a foundation layer: it keeps
-the original NES disassembly untouched while adding a reproducible open-source
-68000 build path and a small hardware demonstrator that subsequent work can
-extend.
+A native Atari ST port of The Legend of Zelda's overworld, built on top of
+aldonunez's NES disassembly in `src/`. It runs as a stock TOS `.PRG` on a
+512KB ST in 320x200 sixteen-colour mode, and reads all of its graphics, room
+layouts and palettes out of a ROM you supply yourself.
 
 What is working today
 ---------------------
 
-- native Motorola 68000 program emitted as a TOS `.PRG`
-- stock Atari ST low-resolution setup: 320x200, 4 bitplanes, 16 colors
-- VBL-paced main loop suitable for STFM / Hatari timing
-- keyboard polling through the IKBD ACIA
-- navigable 20x12 metatile room demonstrator
-- action/start/select input plumbing:
-  - movement: arrow keys or `W/A/S/D`
-  - action: `Space` or `Control` toggles the player marker color
-  - start: `Return` pauses/resumes movement
-  - select: `Right Shift` or `Tab` cycles between demo rooms
-  - quit: `Esc`
-- asset build step that converts NES-style 2bpp CHR into Atari ST planar
-  16x16 metatiles when lawful source data is available locally
-- placeholder asset fallback so the target remains buildable without any ROM
+- native Motorola 68000 program emitted as a TOS `.PRG`, VBL-paced for STFM
+  timing
+- the full 128-screen overworld decoded from the original data: room layouts,
+  16x16 squares, per-area palette
+- Link as a masked, run-time-shifted sprite with four-direction walk animation
+- pixel movement governed by the original collision rules, including the
+  walkable-tile exception list and the two-column test on vertical moves
+- room-to-room traversal with a 16-pixel stepped scroll in all four directions
+- status ribbon with hearts, and rupee, key and bomb counters, using the
+  original glyphs
+- background buffer with dirty-rectangle sprite erase, so a frame costs a few
+  hundred bytes of copying rather than a full 22KB repaint
+- keyboard input through the IKBD ACIA: arrow keys or `W/A/S/D` to walk,
+  `Esc` to quit
+- headless Hatari harness that captures the framebuffer to a PNG and can drive
+  scripted key input
+- placeholder asset fallback so the target still builds without any ROM
 
-What this does not claim yet
-----------------------------
+What this does not do yet
+-------------------------
 
-- no gameplay-accurate Zelda logic port
-- no 6502-to-68000 game logic migration yet
-- no sprite system, scrolling, collision, audio, save handling, or UI port
-- no full ROM-data decoder for real overworld room layouts or attribute tables
+- caves and dungeon entrances, item pickup, the inventory subscreen
+- sword, bombs and any other item use
+- enemies, combat and damage
+- audio, and save handling
+- palette cycling (the animated pond)
 
 Prerequisites
 -------------
@@ -62,61 +65,105 @@ Outputs:
 - `atari_st/build/zelda_st.bin`
 - `atari_st/build/ZELDAST.PRG`
 
-About the asset pipeline
-------------------------
+Supplying the game data
+-----------------------
 
-`atari_st/tools/build_assets.py` demonstrates the representation boundary
-between NES source data and Atari ST rendering data:
+Put a `(U) (PRG0)` or `(PRG1)` ROM image at `ext/Original.nes`. The build reads
+it through `src/bins.xml`, whose offsets are relative to the start of PRG ROM
+because Zelda uses CHR-RAM and stores its graphics inside PRG. `ext/` and
+`*.nes` are both gitignored, so the ROM never enters version control.
 
-- **CHR input**: reads `dat/CommonBackgroundPatterns.dat` either from
-  `bin/dat/` or directly from `ext/Original.nes` using `src/bins.xml`
-- **metatile layer**: combines 8x8 CHR tiles into 16x16 NES-style metatiles
-- **palette layer**: maps those metatiles into Atari ST 12-bit palette entries
-- **map layer**: emits compact room maps for the current demonstrator
-- **output**: writes planar ST-ready metatile graphics plus an assembler include
+Without it the build still succeeds, but prints a warning and emits
+procedurally generated placeholder art. Pass `--require-source` to
+`tools/build_assets.py` to make a missing ROM a hard error instead.
 
-If the ROM is unavailable, the same interfaces emit generated placeholder art so
-the build still succeeds without distributing copyrighted content.
+The asset pipeline
+------------------
 
-Hatari launch examples
-----------------------
+`atari_st/tools/build_assets.py` is the boundary between NES data and ST data:
 
-If Hatari already has a TOS or EmuTOS ROM configured:
+- **pattern tables**: rebuilds the background and sprite pattern tables at the
+  tile indices the game loads them to, per `CommonPatternVramAddrs` (`Z_02.asm`)
+  and `PatternBlockPpuAddrs` (`Z_03.asm`)
+- **rooms**: decodes `RoomLayoutsOW.dat`, the `ColumnHeapOW` tables and
+  `LevelBlockOW.dat` into 128 screens of 16x11 squares
+- **palette**: every colour in all eight NES palette rows -- four background
+  and four sprite -- collapses to exactly sixteen distinct ST values with no
+  collisions, so one hardware palette covers tiles and sprites at full fidelity
+- **collision**: emits the four raw NES tile indices behind each square, which
+  is what lets the engine apply `GetCollidableTile`'s rules at 8-pixel
+  resolution without storing a tile grid per room
+- **output**: planar metatiles, Link's eight sprite frames with opacity masks,
+  HUD glyphs, and an assembler include of the constants lifted from the
+  disassembly
 
-```sh
-hatari --machine st --memsize 1 --monitor rgb --auto atari_st/build/ZELDAST.PRG
+Screen layout
+-------------
+
+```
+y   0.. 23   HUD ribbon, three 8-pixel tile rows, full 320 wide
+y  24..199   playfield, 256x176, x = 32..287
 ```
 
-If you prefer to pass a ROM explicitly:
+The NES play area is 256x176, which fits the ST's 200 lines exactly once 24 are
+given to the status ribbon. Link keeps NES coordinates internally (X 0..255,
+Y `$40`..`$EF`) so the constants taken from the disassembly -- room bounds,
+hotspot offsets, the unwalkable tile threshold -- are used unchanged.
+
+Testing
+-------
+
+`make check` runs the asset unit tests, verifies the generated files against the
+manifest, and validates the PRG header.
+
+For visual and behavioural checks there is a headless Hatari harness:
 
 ```sh
-hatari --machine st --memsize 1 --monitor rgb --tos /path/to/tos.img --auto atari_st/build/ZELDAST.PRG
+export TOS=/path/to/tos.img
+python3 atari_st/tools/screenshot.py --vbls 900 --out build/screen.png
+python3 atari_st/tools/screenshot.py --vbls 2600 --trace os_base,cpu_exception \
+    --keys "620:+left,1100:-left,1100:+up,1600:-up,1600:+right"
 ```
 
-Assumptions and licensing notes
--------------------------------
+It breaks on a VBL count, dumps RAM and the video registers, decodes the
+four-bitplane framebuffer to a PNG, reports Link's state, and warns about bus
+errors or an early `Pterm0`. Key events are injected by poking the key-state
+table, which the harness locates through a marker next to the variable block.
 
-- The existing repository does not include a formal license file; this ST work
-  follows the repository's existing source-sharing model.
-- No proprietary ROM image or extracted Zelda binary asset is committed here.
+`tools/compare_render.py` closes the loop on the renderer by diffing a captured
+framebuffer against a reference render of the same room built in Python; they
+should agree byte for byte outside Link's sprite.
+
+Notes on the ST implementation
+------------------------------
+
+- A `.PRG` is handed the whole TPA by `Pexec`, so `Malloc` returns 0 until the
+  program calls `Mshrink`. That also means moving onto a private stack first,
+  since the GEMDOS stack sits in the memory about to be released.
+- Everything lands in one flat section, so `link.ld` emits `.data` before
+  `.rodata`: the 68000's PC-relative displacement is a signed 16 bits, and the
+  36KB of tables would otherwise push the variable block out of reach.
+- Scroll steps are 16 pixels, exactly one bitplane word, so every copy stays
+  byte-aligned and needs no bit shifting.
+- Sprites are shifted at run time rather than pre-shifted at build time.
+  Sixteen pre-rotated copies would cost 40KB for Link alone; the shift costs a
+  few thousand cycles against a 160,000-cycle frame.
+
+Licensing notes
+---------------
+
+- No proprietary ROM image or extracted Zelda asset is committed here.
 - If you provide `ext/Original.nes`, you are responsible for ensuring you may
   lawfully possess and use that source data.
-- The checked-in converter and 68000 source are open build inputs; generated
-  artifacts stay out of version control.
-
-Memory / video constraints
---------------------------
-
-- targets low-resolution ST video memory: 320x200x4bpp = 32,000 bytes
-- uses a single software-owned screen buffer aligned for the ST shifter
-- redraws a 20x12 metatile room each frame, which is suitable for a simple
-  first slice but should be optimized or partially invalidated later
+- The converter and 68000 source are open build inputs; generated artifacts
+  stay out of version control.
 
 Next porting milestones
 -----------------------
 
-1. replace the placeholder room maps with decoders for real Zelda layout data
-2. separate platform services from game-state logic for gradual 6502 migration
-3. add sprite composition, HUD rendering, and collision-aware movement
-4. investigate YM2149/SNDH-friendly audio playback for Zelda music adaptation
-5. add automated emulator smoke coverage where the CI environment permits it
+1. caves and dungeon entrances, driven by the same square-type data the
+   collision already reads
+2. item pickup, the inventory subscreen and item use
+3. the enemy object system and combat
+4. the underworld, reusing the overworld decoders against the `UW` tables
+5. YM2149 audio from the song scripts already listed in `bins.xml`

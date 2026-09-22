@@ -9,3 +9,4 @@ atari_st/build/
 bin/
 ext/
 obj/
+__pycache__/
